@@ -1,0 +1,113 @@
+paths:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  models_dir: "outputs/models"
+  predictions_dir: "outputs/predictions"
+  results_dir: "outputs/results"
+
+# Raw file names per season. Timestamp column and target column are shared across both scenarios.
+data_files:
+  IW:
+    2023: "berry_inVineyard_2023.csv"
+    2024: "berry_inVineyard_2024.csv"
+    2025: "berry_inVineyard_2025.csv"
+  OW:
+    2023: "berry_openVineyard_2023.csv"
+    2024: "berry_openVineyard_2024.csv"
+    2025: "berry_openVineyard_2025.csv"
+
+timestamp_col: "Timestamp"
+target_col: "Berry Temperature"
+resample_freq: "15min"          # 15-minute uniform grid
+
+candidate_features:
+  IW:
+    - "Air Temperature (IW)"
+    - "Relative Humidity (IW)"
+    - "Soil Temperature (IW)"
+    - "Soil Moisture (IW)"
+  OW:
+    - "Air Temperature (OW)"
+    - "Relative Humidity (OW)"
+    - "Solar Radiation (OW)"
+    - "Wind Speed (OW)"
+
+correlation_threshold: 0.20     # |r| <= 0.20 => "very weak" => excluded
+
+# The air-temperature column used to compute first/second-order differences
+air_temp_col:
+  IW: "Air Temperature (IW)"
+  OW: "Air Temperature (OW)"
+
+
+# Missing-data handling
+gap_filling:
+  short_gap_max_steps: 3        # <3 consecutive missing 15-min samples -> linear interpolation
+  knn_neighbors: 5               # k for KNN imputation of longer gaps
+  knn_within_season_only: true   # restrict KNN neighbor search to the same growing season
+
+outlier_removal:
+  iqr_multiplier: 1.5            # values beyond 1.5x IQR from Q1/Q3 flagged as outliers -> treated as missing
+
+smoothing:
+  savgol_window: 5              
+  savgol_polyorder: 2
+
+
+# Sequence generation
+sequence:
+  n_in: 288                      # 72h @ 15-min resolution
+  n_out: 288                     # 72h @ 15-min resolution
+  step: 1                        # sliding window step size (samples)
+  train_seasons: [2023, 2024]
+  test_season: 2025
+  val_fraction: 0.15             # most recent 15% of TRAIN windows, held out chronologically
+
+# Reported evaluation horizons
+horizons:
+  "t+1 (15 min)": 1
+  "t+4 (1 h)": 4
+  "t+24 (6 h)": 24
+  "t+48 (12 h)": 48
+  "t+96 (24 h)": 96
+  "t+192 (48 h)": 192
+  "t+288 (72 h)": 288
+
+# Model architectures
+models:
+  lstm:
+    layer_units: [128, 64]
+    dense_units: 96
+    dropout: 0.2
+  gru:
+    layer_units: [96, 64]
+    dense_units: 64
+    dropout: 0.2
+  rnn:
+    layer_units: [128, 64]
+    dense_units: 64
+    dropout: 0.2
+  fam_lstm:
+    layer_units: [128, 64]       # identical backbone to lstm
+    attention_hidden: 32
+    dense_units: 96
+    dropout: 0.2
+  rf:
+    n_estimators: 300
+    max_depth: 20
+    criterion: "squared_error"
+    min_samples_split: 2
+
+training:
+  optimizer: "adam"
+  learning_rate: 0.001
+  batch_size: 64
+  max_epochs: 200
+  early_stopping_patience: 20
+  monitor: "val_loss"
+  seeds: [0, 1, 2, 3, 4]
+
+# Inference timing
+inference_timing:
+  n_repeats: 20
+

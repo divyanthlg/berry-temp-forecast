@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# Generated artifacts -- regenerate via preprocessing.py / train.py / evaluate.py
+data/processed/*.csv
+outputs/models/*
+outputs/predictions/*
+outputs/results/*
+!outputs/models/.gitkeep
+!outputs/predictions/.gitkeep
+!outputs/results/.gitkeep
+!data/processed/.gitkeep
