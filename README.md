@@ -101,17 +101,6 @@ python src/train.py --model rf --scenario OW --seed 3
     saved model           : outputs/models/fam_lstm_IW_seed0.keras
     saved metadata        : outputs/models/fam_lstm_IW_seed0_meta.json
 ```
-**Output, written to disk** (all under `outputs/models/`):
-- `{run_id}.keras` (or `.pkl` for RF) -- the trained model weights.
-- `{run_id}_meta.json` -- machine-readable record of the same numbers
-  printed above (`n_trainable_params`, `train_seconds_total`,
-  `train_seconds_per_epoch`, `epochs_trained`, `model_path`), for Table 5.
-- `{run_id}_history.pkl` -- full per-epoch loss/val_loss history (deep
-  models only).
-- `scaler_X_{scenario}.pkl` / `scaler_y_{scenario}.pkl` -- the fitted
-  scalers, cached so `test.py` doesn't need to refit them.
-
-Where `run_id` = `{model}_{scenario}_seed{seed}`, e.g. `fam_lstm_IW_seed0`.
 
 ### `src/test.py`
 **What it does:** Loads a trained model for a given `(model, scenario)`
@@ -130,14 +119,6 @@ python src/test.py --model rf --scenario OW --seed 2           # one seed only
     t+1 MAE  : 0.512
     t+288 MAE: 1.573
 ```
-**Output, written to disk:**
-- `outputs/predictions/{run_id}_y_true.npy` / `_y_pred.npy` -- full
-  `(n_test, 288)` arrays in original (deg C) units.
-- `outputs/results/{model}_{scenario}_per_seed.csv` -- one row per
-  (seed, horizon) with MAE/RMSE/MAPE and that seed's inference time.
-- `outputs/results/{model}_{scenario}_summary.csv` -- mean +/- SD across
-  seeds per horizon/metric (only written when `--seed all`); this is what
-  goes directly into Tables 1 and 2.
 
 ## Setup
 
